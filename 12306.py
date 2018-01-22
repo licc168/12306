@@ -25,7 +25,7 @@ mp_url="https://kyfw.12306.cn/otn/confirmPassenger/initDc"#购票页面
 #可在cookie里面找
 fromStation = "%u676D%u5DDE%2CHZH"#杭州
 toStation="%u4E5D%u6C5F%2CJJG"#九江
-fromDates=["2018-02-13","2018-02-14"]
+fromDates=["2018-02-12","2018-02-13","2018-02-14"]
 
 
 #维护一个座位和下拉值的对应关系
@@ -37,13 +37,13 @@ zuowei_select = {"SW":"9","YD":"M","ED":"O","PR":"4","YW":"3","YZ":"1"}
 '''
 
 # 0：车次优先  1：座位号优先
-type = 1
+type = 0
 
-checis=["G1463","G1583"]
+checis=["Z4047","3147","G1463","G1583","G1393"]
 
-zuocis=["ED","YD","GR"]
+zuocis=["ED","YD","GR","YW","YZ"]
 
-persons=["张三","李四"]
+persons=["1111"]
 
 def login():
     browser = webdriver.Chrome()
@@ -185,17 +185,21 @@ def buyTicket(browser,currentWin,zuoweiSelect):
         else:
             # 将driver与新的页面绑定起来
             browser = browser.switch_to_window(i)
+
     # 选人
     selectPerson(browser)
 
-    # 选座位
-    browser.find_element_by_id("seatType_1").send_keys(zuoweiSelect)
+    # 选座位'
+    seatType_1 =  WebDriverWait(browser, 2).until(EC.presence_of_element_located((By.ID, "seatType_1")))
+
+    seatType_1.send_keys(zuoweiSelect)
     # 一切准备就绪 提交订单
-    submitOrder_id =  WebDriverWait(browser, 2).until(EC.presence_of_element_located((By.ID, "submitOrder_id")))
+    submitOrder_id =  WebDriverWait(browser, 2).until(EC.element_to_be_clickable((By.ID, "submitOrder_id")))
     submitOrder_id.click()
     #确认订单
-    qr_submit_id =  WebDriverWait(browser, 2).until(EC.presence_of_element_located((By.ID, "qr_submit_id")))
-    submitOrder_id.click()
+    time.sleep(2)
+    qr_submit_id =  WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "qr_submit_id")))
+    qr_submit_id.click()
 
 
 
@@ -203,8 +207,9 @@ def buyTicket(browser,currentWin,zuoweiSelect):
 
 # 根据人的名字自动选中人
 def selectPerson(browser):
-    time.sleep(1)
-    for person in browser.find_elements_by_xpath("//ul[@id='normal_passenger_id']/li"):
+    lis = WebDriverWait(browser, 10).until(EC.presence_of_all_elements_located((By.XPATH, "//ul[@id='normal_passenger_id']/li")))
+    for person in lis:
+
         personName = person.text
         if personName in persons:
             person.find_element_by_tag_name("input").click()
