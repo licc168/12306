@@ -22,10 +22,7 @@ initmy_url = "https://kyfw.12306.cn/otn/index/initMy12306"
 ticket_url = "https://kyfw.12306.cn/otn/leftTicket/init"
 mp_url="https://kyfw.12306.cn/otn/confirmPassenger/initDc"#购票页面
 
-#可在cookie里面找
-fromStation = "%u676D%u5DDE%2CHZH"#杭州
-toStation="%u4E5D%u6C5F%2CJJG"#九江
-fromDates=["2018-02-12","2018-02-13","2018-02-14"]
+
 
 
 #维护一个座位和下拉值的对应关系
@@ -39,12 +36,27 @@ zuowei_select = {"SW":"9","YD":"M","ED":"O","PR":"4","YW":"3","YZ":"1"}
 # 0：车次优先  1：座位号优先
 type = 0
 
+# 李长超
+#可在cookie里面找
+fromStation = "%u676D%u5DDE%2CHZH"#杭州
+toStation="%u4E5D%u6C5F%2CJJG"#九江
+fromDates=["2018-01-24","2018-02-13","2018-02-14"]
+
 checis=["Z4047","3147","G1463","G1583","G1393"]
 
 zuocis=["ED","YD","GR","YW","YZ"]
 
-persons=["1111"]
+persons=["111"]
 
+#张乔茵
+# fromStation = "%u5ECA%u574A%2CLJP"#廊坊
+# toStation="%u9526%u5DDE%2CJZD"#锦州
+# fromDates=["2018-02-09","2018-02-10","2018-02-11","2018-02-12"]
+# checis=["G395","K1301"]
+#
+# zuocis=["ED","YW"]
+#
+# persons=["111"]
 def login():
     browser = webdriver.Chrome()
     browser.get(login_url)
@@ -93,72 +105,81 @@ def main():
                 )
             except:
                 continue
-            for i in browser.find_elements_by_class_name('btn72'):
-                train = i.find_element_by_xpath('../..')
-                cells = train.find_elements_by_tag_name('td')
-                # 车次
-                tnumber = train.find_element_by_class_name('train').text
-                # 始发站-结束站
-                fromToStation = re.sub('\n', '-', train.find_element_by_class_name('cdz').text)
-                # 始发时间-结束时间
-                fromToDate = re.sub('\n', '-', train.find_element_by_class_name('cds').text)
+            try:
+                for i in browser.find_elements_by_class_name('btn72'):
+                    train = i.find_element_by_xpath('../..')
+                    cells = train.find_elements_by_tag_name('td')
+                    # 车次
+                    tnumber = train.find_element_by_class_name('train').text
+                    # 始发站-结束站
+                    fromToStation = re.sub('\n', '-', train.find_element_by_class_name('cdz').text)
+                    # 始发时间-结束时间
+                    fromToDate = re.sub('\n', '-', train.find_element_by_class_name('cds').text)
 
-                ls = re.sub('\n', '-', train.find_element_by_class_name('ls').text)
+                    ls = re.sub('\n', '-', train.find_element_by_class_name('ls').text)
 
-                # 按钮元素
-                btnElm = cells[12]
+                    # 按钮元素
+                    btnElm = cells[12]
 
-                # 车次信息
-                checiInfo = {}
-                checiInfo["SW"] = cells[1].text
-                checiInfo["YD"] = cells[2].text
-                checiInfo["ED"] = cells[3].text
-                checiInfo["GR"] = cells[4].text
-                checiInfo["PR"] = cells[5].text
-                checiInfo["DW"] = cells[6].text
-                checiInfo["YW"] = cells[7].text
-                checiInfo["RZ"] = cells[8].text
-                checiInfo["YZ"] = cells[9].text
+                    # 车次信息
+                    checiInfo = {}
+                    checiInfo["SW"] = cells[1].text
+                    checiInfo["YD"] = cells[2].text
+                    checiInfo["ED"] = cells[3].text
+                    checiInfo["GR"] = cells[4].text
+                    checiInfo["PR"] = cells[5].text
+                    checiInfo["DW"] = cells[6].text
+                    checiInfo["YW"] = cells[7].text
+                    checiInfo["RZ"] = cells[8].text
+                    checiInfo["YZ"] = cells[9].text
 
-                '''
-               优先级  车次>座位号
-              '''
-                if type == 0:
-                    for checi in checis:
-                        # 判断车子是否是想要的车次
-                        if tnumber == checi:
-                            # 判断座位是否是想要的座位
-                            for zc in zuocis:
-                                # 条件满足 有票
-                                if checiInfo[zc] != '--':
-                                    # 座位下拉值
-                                    zuoweiSelect = zuowei_select[zc]
-                                    # 打印车次信息
-                                    showCheciInfo(tnumber, fromToStation, fromToDate, cells)
-                                    # 以上条件都满足 开始购票啦
-                                    currentWin = browser.current_window_handle
-                                    btnElm.click()
-                                    buyTicket(browser, currentWin, zuoweiSelect)
-
-                '''
-                优先级  座位号>车次
-              '''
-                if type == 1:
-                    for zc in zuocis:
-                        if checiInfo[zc] != '--':
+                    '''
+                   优先级  车次>座位号
+                  '''
+                    if type == 0:
+                        for checi in checis:
                             # 判断车子是否是想要的车次
-                            # 判断座位是否是想要的座位
-                            for checi in checis:
-                                # 条件满足 有票
-                                if tnumber == checi:
-                                    # 座位下拉值
-                                    zuoweiSelect = zuowei_select[zc]
-                                    # 打印车次信息
-                                    showCheciInfo(tnumber, fromToStation, fromToDate, cells)
-                                    # 以上条件都满足 开始购票啦
-                                    currentWin = browser.current_window_handle
-                                    btnElm.click()
-                                    buyTicket(browser, currentWin, zuoweiSelect)
+                            if tnumber == checi:
+                                # 判断座位是否是想要的座位
+                                for zc in zuocis:
+                                    # 条件满足 有票
+                                    if checiInfo[zc] != '--':
+                                        # 座位下拉值
+                                        zuoweiSelect = zuowei_select[zc]
+                                        # 打印车次信息
+                                        showCheciInfo(tnumber, fromToStation, fromToDate, cells)
+                                        # 以上条件都满足 开始购票啦
+                                        currentWin = browser.current_window_handle
+                                        btnElm.click()
+                                        buyTicket(browser, currentWin, zuoweiSelect)
+
+                    '''
+                    优先级  座位号>车次
+                  '''
+                    if type == 1:
+                        for zc in zuocis:
+                            if checiInfo[zc] != '--':
+                                # 判断车子是否是想要的车次
+                                # 判断座位是否是想要的座位
+                                for checi in checis:
+                                    # 条件满足 有票
+                                    if tnumber == checi:
+                                        # 座位下拉值
+                                        zuoweiSelect = zuowei_select[zc]
+                                        # 打印车次信息
+                                        showCheciInfo(tnumber, fromToStation, fromToDate, cells)
+                                        # 以上条件都满足 开始购票啦
+                                        currentWin = browser.current_window_handle
+                                        btnElm.click()
+                                        buyTicket(browser, currentWin, zuoweiSelect)
+            except BusinessException as e:
+                # 如果购票失败则跳到购票页面
+                selectYuding = WebDriverWait(browser, 2).until(EC.presence_of_element_located((By.ID, "selectYuding")))
+                currentWin = browser.current_window_handle
+                selectYuding.click()
+                browser = fowardPage(browser, currentWin)
+                print("\033[0;31;40m\t"+e.value+"\033[0m")
+                continue
 
 
 
@@ -177,29 +198,37 @@ currentWin:当前窗口
 zuoweiSelect：购票页面下拉值
 '''
 def buyTicket(browser,currentWin,zuoweiSelect):
-    # 跳转到购票页面
-    handles = browser.window_handles
-    for i in handles:
-        if currentWin == i:
-            continue
-        else:
-            # 将driver与新的页面绑定起来
-            browser = browser.switch_to_window(i)
-
-    # 选人
-    selectPerson(browser)
+    #重定向到购票页面
+    browser = fowardPage(browser, currentWin)
+    try:
+        # 选人
+        selectPerson(browser)
+    except:
+        raise BusinessException("选人失败--跳转到购票页面重新查询")
 
     # 选座位'
-    seatType_1 =  WebDriverWait(browser, 2).until(EC.presence_of_element_located((By.ID, "seatType_1")))
+    try:
+        seatType_1 =  WebDriverWait(browser, 2).until(EC.presence_of_element_located((By.ID, "seatType_1")))
+        seatType_1.send_keys(zuoweiSelect)
+    except:
+        raise BusinessException("选座位失败--跳转到购票页面重新查询")
 
-    seatType_1.send_keys(zuoweiSelect)
     # 一切准备就绪 提交订单
-    submitOrder_id =  WebDriverWait(browser, 2).until(EC.element_to_be_clickable((By.ID, "submitOrder_id")))
-    submitOrder_id.click()
+    try:
+        submitOrder_id =  WebDriverWait(browser, 2).until(EC.element_to_be_clickable((By.ID, "submitOrder_id")))
+        submitOrder_id.click()
+    except:
+        raise BusinessException("提交订单--跳转到购票页面重新查询")
+
     #确认订单
-    time.sleep(2)
-    qr_submit_id =  WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "qr_submit_id")))
-    qr_submit_id.click()
+
+    try:
+        qr_submit_id =  WebDriverWait(browser, 2).until(EC.element_to_be_clickable((By.ID, "qr_submit_id11")))
+        qr_submit_id.click()
+    except:
+        raise  BusinessException("购票失败-没有余票--跳转到购票页面重新查询")
+    browser.close()
+
 
 
 
@@ -215,10 +244,30 @@ def selectPerson(browser):
             person.find_element_by_tag_name("input").click()
 
 
+#自定义异常
+class BusinessException(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+
+
+#跳转重定向页面
+def fowardPage(browser,currentWin):
+    # 跳转到购票页面
+    handles = browser.window_handles
+    for i in handles:
+        if currentWin == i:
+            continue
+        else:
+            # 将driver与新的页面绑定起来
+            browser = browser.switch_to_window(i)
+    return browser
+
 
 if __name__ == '__main__':
     main()
-
-
 
 
