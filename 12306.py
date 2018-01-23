@@ -16,7 +16,7 @@ from selenium.webdriver.support import expected_conditions as EC
 选座位下拉值------ 3:硬卧 1：硬座 4：软卧 O：二等座 M:一等座  9商务座
 '''
 username = "licchuo168"
-password = "111111"
+password = "111"
 login_url = "https://kyfw.12306.cn/otn/login/init"
 initmy_url = "https://kyfw.12306.cn/otn/index/initMy12306"
 ticket_url = "https://kyfw.12306.cn/otn/leftTicket/init"
@@ -223,7 +223,7 @@ def buyTicket(browser,currentWin,zuoweiSelect):
     #确认订单
 
     try:
-        qr_submit_id =  WebDriverWait(browser, 2).until(EC.element_to_be_clickable((By.ID, "qr_submit_id11")))
+        qr_submit_id =  WebDriverWait(browser, 2).until(EC.element_to_be_clickable((By.ID, "qr_submit_id")))
         qr_submit_id.click()
     except:
         raise  BusinessException("购票失败-没有余票--跳转到购票页面重新查询")
