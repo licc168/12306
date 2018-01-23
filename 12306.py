@@ -16,7 +16,7 @@ from selenium.webdriver.support import expected_conditions as EC
 选座位下拉值------ 3:硬卧 1：硬座 4：软卧 O：二等座 M:一等座  9商务座
 '''
 username = "licchuo168"
-password = "111"
+password = "1111"
 login_url = "https://kyfw.12306.cn/otn/login/init"
 initmy_url = "https://kyfw.12306.cn/otn/index/initMy12306"
 ticket_url = "https://kyfw.12306.cn/otn/leftTicket/init"
@@ -40,13 +40,13 @@ type = 0
 #可在cookie里面找
 fromStation = "%u676D%u5DDE%2CHZH"#杭州
 toStation="%u4E5D%u6C5F%2CJJG"#九江
-fromDates=["2018-01-24","2018-02-13","2018-02-14"]
+fromDates=["2018-01-24","2018-02-12","2018-02-13","2018-02-14"]
 
 checis=["Z4047","3147","G1463","G1583","G1393"]
 
 zuocis=["ED","YD","GR","YW","YZ"]
 
-persons=["111"]
+persons=["1111"]
 
 #张乔茵
 # fromStation = "%u5ECA%u574A%2CLJP"#廊坊
@@ -56,7 +56,7 @@ persons=["111"]
 #
 # zuocis=["ED","YW"]
 #
-# persons=["111"]
+# persons=["张乔茵"]
 def login():
     browser = webdriver.Chrome()
     browser.get(login_url)
@@ -174,10 +174,11 @@ def main():
                                         buyTicket(browser, currentWin, zuoweiSelect)
             except BusinessException as e:
                 # 如果购票失败则跳到购票页面
-                selectYuding = WebDriverWait(browser, 2).until(EC.presence_of_element_located((By.ID, "selectYuding")))
-                currentWin = browser.current_window_handle
-                selectYuding.click()
-                browser = fowardPage(browser, currentWin)
+                # selectYuding = WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.ID, "selectYuding")))
+                # currentWin = browser.current_window_handle
+                # selectYuding.click()
+                # browser = fowardPage(browser, currentWin)
+                browser.get(ticket_url)
                 print("\033[0;31;40m\t"+e.value+"\033[0m")
                 continue
 
@@ -186,10 +187,12 @@ def main():
 
 # 打印车次信息
 def showCheciInfo(tnumber,fromToStation,fromToDate,cells):
-    print("车次：" + tnumber + " " + fromToStation + " " + fromToDate + "商务:" + cells[1].text
-        + " 一等：" + cells[2].text + " 二等：" + cells[3].text + " 高软：" + cells[4].text + " 软：" +
-          cells[5].text+ " 动卧：" + cells[6].text + " 硬卧：" + cells[7].text + " 软座：" + cells[8].text + " 硬座：" + cells[9].text)
-
+    try:
+        print("车次：" + tnumber + " " + fromToStation + " " + fromToDate + "商务:" + cells[1].text
+            + " 一等：" + cells[2].text + " 二等：" + cells[3].text + " 高软：" + cells[4].text + " 软：" +
+              cells[5].text+ " 动卧：" + cells[6].text + " 硬卧：" + cells[7].text + " 软座：" + cells[8].text + " 硬座：" + cells[9].text)
+    except:
+        raise BusinessException("打印失败")
 
 
 ## 进入购票页面开始购票
@@ -223,11 +226,19 @@ def buyTicket(browser,currentWin,zuoweiSelect):
     #确认订单
 
     try:
+        time.sleep(3)
         qr_submit_id =  WebDriverWait(browser, 2).until(EC.element_to_be_clickable((By.ID, "qr_submit_id")))
+        time.sleep(1)
         qr_submit_id.click()
     except:
-        raise  BusinessException("购票失败-没有余票--跳转到购票页面重新查询")
-    browser.close()
+        try:
+            qr_submit_id = WebDriverWait(browser, 2).until(EC.element_to_be_clickable((By.ID, "qr_submit_id")))
+            time.sleep(1)
+            qr_submit_id.click()
+        except:
+            raise BusinessException("购票失败-没有余票--跳转到购票页面重新查询")
+
+
 
 
 
