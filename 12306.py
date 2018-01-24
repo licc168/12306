@@ -5,6 +5,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import itchat
+
 '''
 实现功能：
    1）根据车次和座位选票  
@@ -16,7 +18,7 @@ from selenium.webdriver.support import expected_conditions as EC
 选座位下拉值------ 3:硬卧 1：硬座 4：软卧 O：二等座 M:一等座  9商务座
 '''
 username = "licchuo168"
-password = "1111"
+password = "111111"
 login_url = "https://kyfw.12306.cn/otn/login/init"
 initmy_url = "https://kyfw.12306.cn/otn/index/initMy12306"
 ticket_url = "https://kyfw.12306.cn/otn/leftTicket/init"
@@ -40,13 +42,13 @@ type = 0
 #可在cookie里面找
 fromStation = "%u676D%u5DDE%2CHZH"#杭州
 toStation="%u4E5D%u6C5F%2CJJG"#九江
-fromDates=["2018-01-24","2018-02-12","2018-02-13","2018-02-14"]
+fromDates=["2018-02-11","2018-02-12","2018-02-13","2018-02-14"]
 
-checis=["Z4047","3147","G1463","G1583","G1393"]
+checis=["Z4047","3147","G1461","G1583","G1393"]
 
 zuocis=["ED","YD","GR","YW","YZ"]
 
-persons=["1111"]
+persons=["李长超"]
 
 #张乔茵
 # fromStation = "%u5ECA%u574A%2CLJP"#廊坊
@@ -81,17 +83,26 @@ def login():
     return browser
 
 def main():
+    itchat.auto_login()
+
+
     browser = login()
     browser.get(ticket_url)
     count = 0
     while browser.current_url == ticket_url:
         browser.add_cookie({'name': '_jc_save_fromStation', 'value': fromStation})
         browser.add_cookie({'name': '_jc_save_toStation', 'value': toStation})
+        login_user = browser.find_element_by_id('login_user').text
+        if login_user == "登录":
+            itchat.send('请登录', toUserName='filehelper')
+            browser = login()
+            continue
         for fromDate in fromDates:
             count += 1
             browser.add_cookie({'name': '_jc_save_fromDate', 'value': fromDate})
             browser.refresh()
             print(u'开始第 %s 次查询...' % count)
+
             try:
                 btnElm =  WebDriverWait(browser, 1).until(
                     EC.presence_of_element_located((By.ID, "query_ticket")))
@@ -147,7 +158,7 @@ def main():
                                         # 座位下拉值
                                         zuoweiSelect = zuowei_select[zc]
                                         # 打印车次信息
-                                        showCheciInfo(tnumber, fromToStation, fromToDate, cells)
+                                        showCheciInfo(fromDate,tnumber, fromToStation, fromToDate, cells)
                                         # 以上条件都满足 开始购票啦
                                         currentWin = browser.current_window_handle
                                         btnElm.click()
@@ -167,7 +178,7 @@ def main():
                                         # 座位下拉值
                                         zuoweiSelect = zuowei_select[zc]
                                         # 打印车次信息
-                                        showCheciInfo(tnumber, fromToStation, fromToDate, cells)
+                                        showCheciInfo(fromDate,tnumber, fromToStation, fromToDate, cells)
                                         # 以上条件都满足 开始购票啦
                                         currentWin = browser.current_window_handle
                                         btnElm.click()
@@ -179,6 +190,7 @@ def main():
                 # selectYuding.click()
                 # browser = fowardPage(browser, currentWin)
                 browser.get(ticket_url)
+                itchat.send(e.value, toUserName='filehelper')
                 print("\033[0;31;40m\t"+e.value+"\033[0m")
                 continue
 
@@ -186,11 +198,12 @@ def main():
 
 
 # 打印车次信息
-def showCheciInfo(tnumber,fromToStation,fromToDate,cells):
+def showCheciInfo(fromDate,tnumber,fromToStation,fromToDate,cells):
     try:
-        print("车次：" + tnumber + " " + fromToStation + " " + fromToDate + "商务:" + cells[1].text
-            + " 一等：" + cells[2].text + " 二等：" + cells[3].text + " 高软：" + cells[4].text + " 软：" +
-              cells[5].text+ " 动卧：" + cells[6].text + " 硬卧：" + cells[7].text + " 软座：" + cells[8].text + " 硬座：" + cells[9].text)
+        tickMsg = "时间："+fromDate+" 车次：" + tnumber + " " + fromToStation + " " + fromToDate + "商务:" + cells[1].text+" 一等：" + cells[2].text + " 二等：" + cells[3].text + " 高软：" + cells[4].text + " 软："\
+                   + cells[5].text+ " 动卧：" + cells[6].text + " 硬卧：" + cells[7].text + " 软座：" + cells[8].text + " 硬座：" + cells[9].text
+        print(tickMsg)
+        itchat.send(tickMsg, toUserName='filehelper')
     except:
         raise BusinessException("打印失败")
 
@@ -226,14 +239,11 @@ def buyTicket(browser,currentWin,zuoweiSelect):
     #确认订单
 
     try:
-        time.sleep(3)
         qr_submit_id =  WebDriverWait(browser, 2).until(EC.element_to_be_clickable((By.ID, "qr_submit_id")))
-        time.sleep(1)
         qr_submit_id.click()
     except:
         try:
             qr_submit_id = WebDriverWait(browser, 2).until(EC.element_to_be_clickable((By.ID, "qr_submit_id")))
-            time.sleep(1)
             qr_submit_id.click()
         except:
             raise BusinessException("购票失败-没有余票--跳转到购票页面重新查询")
