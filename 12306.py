@@ -23,7 +23,7 @@ login_url = "https://kyfw.12306.cn/otn/login/init"
 initmy_url = "https://kyfw.12306.cn/otn/index/initMy12306"
 ticket_url = "https://kyfw.12306.cn/otn/leftTicket/init"
 mp_url="https://kyfw.12306.cn/otn/confirmPassenger/initDc"#购票页面
-
+pay_url="https://kyfw.12306.cn/otn//payOrder/init"
 
 
 
@@ -42,7 +42,7 @@ type = 0
 #可在cookie里面找
 fromStation = "%u676D%u5DDE%2CHZH"#杭州
 toStation="%u4E5D%u6C5F%2CJJG"#九江
-fromDates=["2018-02-11","2018-02-12","2018-02-13","2018-02-14"]
+fromDates=["2018-01-25","2018-01-26","2018-01-27","2018-01-28","2018-02-11","2018-02-12","2018-02-13"]
 
 checis=["Z4047","3147","G1461","G1583","G1393"]
 
@@ -50,6 +50,8 @@ zuocis=["ED","YD","GR","YW","YZ"]
 
 persons=["李长超"]
 
+#判断购票是否成功
+buyFlag = False
 #张乔茵
 # fromStation = "%u5ECA%u574A%2CLJP"#廊坊
 # toStation="%u9526%u5DDE%2CJZD"#锦州
@@ -90,7 +92,8 @@ def main():
     browser = login(browser)
     browser.get(ticket_url)
     count = 0
-    while browser.current_url == ticket_url:
+    global  buyFlag
+    while (buyFlag == False and browser.current_url == ticket_url  ):
         browser.add_cookie({'name': '_jc_save_fromStation', 'value': fromStation})
         browser.add_cookie({'name': '_jc_save_toStation', 'value': toStation})
         login_user = browser.find_element_by_id('login_user').text
@@ -187,7 +190,8 @@ def main():
                                         # 以上条件都满足 开始购票啦
                                         currentWin = browser.current_window_handle
                                         btnElm.click()
-                                        buyTicket(browser, currentWin, zuoweiSelect)
+                                        buyFlag =  buyTicket(browser, currentWin, zuoweiSelect)
+
             except BusinessException as e:
                 # 如果购票失败则跳到购票页面
                 # selectYuding = WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.ID, "selectYuding")))
@@ -212,6 +216,9 @@ def showCheciInfo(fromDate,tnumber,fromToStation,fromToDate,cells):
     except:
         raise BusinessException("打印失败")
 
+def test():
+    global buyFlag
+    buyFlag = True
 
 ## 进入购票页面开始购票
 '''
@@ -219,6 +226,7 @@ currentWin:当前窗口
 zuoweiSelect：购票页面下拉值
 '''
 def buyTicket(browser,currentWin,zuoweiSelect):
+    global buyFlag
     #重定向到购票页面
     browser = fowardPage(browser, currentWin)
     try:
@@ -252,12 +260,12 @@ def buyTicket(browser,currentWin,zuoweiSelect):
             qr_submit_id.click()
         except:
             raise BusinessException("购票失败-没有余票--跳转到购票页面重新查询")
+    url = browser.current_url
 
-
-
-
-
-
+    if url.index(pay_url)>-1:
+        print("购票成功：订单页面-->" + url)
+        itchat.send("购票成功：订单页面-->" + url)
+        buyFlag = True
 
 
 # 根据人的名字自动选中人
