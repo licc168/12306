@@ -59,9 +59,8 @@ persons=["李长超"]
 # zuocis=["ED","YW"]
 #
 # persons=["张乔茵"]
-def login():
-    browser = webdriver.Chrome()
-    browser.get(login_url)
+def login(browser):
+
     time.sleep(1)
     #输入用户名
     elem = browser.find_element_by_id("username")
@@ -83,10 +82,12 @@ def login():
     return browser
 
 def main():
+
     itchat.auto_login()
 
-
-    browser = login()
+    browser = webdriver.Chrome()
+    browser.get(login_url)
+    browser = login(browser)
     browser.get(ticket_url)
     count = 0
     while browser.current_url == ticket_url:
@@ -95,7 +96,11 @@ def main():
         login_user = browser.find_element_by_id('login_user').text
         if login_user == "登录":
             itchat.send('请登录', toUserName='filehelper')
-            browser = login()
+            currentWin = browser.current_window_handle
+            browser.find_element_by_id('login_user').click()
+            browser = fowardPage(browser, currentWin)
+            browser =login(browser)
+            browser.get(ticket_url)
             continue
         for fromDate in fromDates:
             count += 1
