@@ -5,12 +5,14 @@
 ```
 - python 3
 - pip install selenium
+- pip install itchat
 - chromedriver 驱动
 ```
+
 #### 功能（跟12306网页版区别）
 - 配置更灵活可以根据自己的需求改进
 - 不会出现查询超时而导致自动刷新失效
-- 购票失败发送微信信息提醒
+- 如果购票成功或者失败则发送 微信|QQ 信息提醒
 
 
 

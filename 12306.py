@@ -6,6 +6,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import itchat
+import qqMsg
+import config
 
 '''
 实现功能：
@@ -17,61 +19,40 @@ import itchat
 座位简写----SW:商务  YD:一等座  ED:二等座 GR:高软 PR:软 DW:动卧 YW:硬卧  YZ:硬座 RZ 软座
 选座位下拉值------ 3:硬卧 1：硬座 4：软卧 O：二等座 M:一等座  9商务座
 '''
-username = "licchuo168"
-password = "111111"
+
 login_url = "https://kyfw.12306.cn/otn/login/init"
 initmy_url = "https://kyfw.12306.cn/otn/index/initMy12306"
 ticket_url = "https://kyfw.12306.cn/otn/leftTicket/init"
 mp_url="https://kyfw.12306.cn/otn/confirmPassenger/initDc"#购票页面
 pay_url="https://kyfw.12306.cn/otn//payOrder/init"
 
-
-
 #维护一个座位和下拉值的对应关系
 zuowei_select = {"SW":"9","YD":"M","ED":"O","PR":"4","YW":"3","YZ":"1"}
 
-
-'''
-备注：车次和座位 排在前面则优先级越高
-'''
-
-# 0：车次优先  1：座位号优先
-type = 0
-
-# 李长超
-#可在cookie里面找
-fromStation = "%u676D%u5DDE%2CHZH"#杭州
-toStation="%u4E5D%u6C5F%2CJJG"#九江
-fromDates=["2018-01-25","2018-01-26","2018-01-27","2018-01-28","2018-02-11","2018-02-12","2018-02-13"]
-
-checis=["Z4047","3147","G1461","G1583","G1393"]
-
-zuocis=["ED","YD","GR","YW","YZ"]
-
-persons=["李长超"]
-
 #判断购票是否成功
 buyFlag = False
-#张乔茵
-# fromStation = "%u5ECA%u574A%2CLJP"#廊坊
-# toStation="%u9526%u5DDE%2CJZD"#锦州
-# fromDates=["2018-02-09","2018-02-10","2018-02-11","2018-02-12"]
-# checis=["G395","K1301"]
-#
-# zuocis=["ED","YW"]
-#
-# persons=["张乔茵"]
+
+
+# 发送信息类型 0:发送QQ信息  1：发送微信信息
+sendType = 0
+
+
+
+
+
+
+
 def login(browser):
 
     time.sleep(1)
     #输入用户名
     elem = browser.find_element_by_id("username")
     elem.clear()
-    elem.send_keys(username)
+    elem.send_keys(config.username)
     #输入密码
     elem = browser.find_element_by_id("password")
     elem.clear()
-    elem.send_keys(password)
+    elem.send_keys(config.password)
     print(u"等待验证码，自行输入...")
     while True:
         if browser.current_url != initmy_url:
@@ -85,7 +66,7 @@ def login(browser):
 
 def main():
 
-    itchat.auto_login()
+    #itchat.auto_login()
 
     browser = webdriver.Chrome()
     browser.get(login_url)
@@ -94,23 +75,23 @@ def main():
     count = 0
     global  buyFlag
     while (buyFlag == False and browser.current_url == ticket_url  ):
-        browser.add_cookie({'name': '_jc_save_fromStation', 'value': fromStation})
-        browser.add_cookie({'name': '_jc_save_toStation', 'value': toStation})
+        browser.add_cookie({'name': '_jc_save_fromStation', 'value': config.fromStation})
+        browser.add_cookie({'name': '_jc_save_toStation', 'value': config.toStation})
         login_user = browser.find_element_by_id('login_user').text
         if login_user == "登录":
-            itchat.send('请登录', toUserName='filehelper')
+            sendMsg(sendType,config.to_user,"请登录")
             currentWin = browser.current_window_handle
             browser.find_element_by_id('login_user').click()
             browser = fowardPage(browser, currentWin)
             browser =login(browser)
             browser.get(ticket_url)
             continue
-        for fromDate in fromDates:
+        for fromDate in config.fromDates:
             count += 1
             browser.add_cookie({'name': '_jc_save_fromDate', 'value': fromDate})
             browser.refresh()
             print(u'开始第 %s 次查询...' % count)
-
+            sendMsg(sendType, config.to_user, u'开始第 %s 次查询...' % count)
             try:
                 btnElm =  WebDriverWait(browser, 1).until(
                     EC.presence_of_element_located((By.ID, "query_ticket")))
@@ -156,11 +137,11 @@ def main():
                    优先级  车次>座位号
                   '''
                     if type == 0:
-                        for checi in checis:
+                        for checi in config.checis:
                             # 判断车子是否是想要的车次
                             if tnumber == checi:
                                 # 判断座位是否是想要的座位
-                                for zc in zuocis:
+                                for zc in config.zuocis:
                                     # 条件满足 有票
                                     if checiInfo[zc] != '--':
                                         # 座位下拉值
@@ -176,11 +157,11 @@ def main():
                     优先级  座位号>车次
                   '''
                     if type == 1:
-                        for zc in zuocis:
+                        for zc in config.zuocis:
                             if checiInfo[zc] != '--':
                                 # 判断车子是否是想要的车次
                                 # 判断座位是否是想要的座位
-                                for checi in checis:
+                                for checi in config.checis:
                                     # 条件满足 有票
                                     if tnumber == checi:
                                         # 座位下拉值
@@ -199,7 +180,9 @@ def main():
                 # selectYuding.click()
                 # browser = fowardPage(browser, currentWin)
                 browser.get(ticket_url)
-                itchat.send(e.value, toUserName='filehelper')
+                #itchat.send(e.value, toUserName='filehelper')
+                sendMsg(sendType, config.to_user, e.value)
+
                 print("\033[0;31;40m\t"+e.value+"\033[0m")
                 continue
 
@@ -264,7 +247,9 @@ def buyTicket(browser,currentWin,zuoweiSelect):
 
     if url.index(pay_url)>-1:
         print("购票成功：订单页面-->" + url)
-        itchat.send("购票成功：订单页面-->" + url)
+        #itchat.send("购票成功：订单页面-->" + url)
+        sendMsg(sendType, config.to_user,  "购票成功：订单页面-->" + url)
+
         buyFlag = True
 
 
@@ -274,7 +259,7 @@ def selectPerson(browser):
     for person in lis:
 
         personName = person.text
-        if personName in persons:
+        if personName in config.persons:
             person.find_element_by_tag_name("input").click()
 
 
@@ -299,6 +284,20 @@ def fowardPage(browser,currentWin):
             # 将driver与新的页面绑定起来
             browser = browser.switch_to_window(i)
     return browser
+
+'''
+type 0:发送QQ信息  1：发送微信信息
+to  接受人用户名
+msg 发送内容
+'''
+
+def sendMsg(type,to,msg):
+    if type==0:#发送QQ信息
+        qqMsg.send_qq(to,msg)
+    else:#发送微信信息
+        itchat.send(msg, toUserName=to)
+
+
 
 
 if __name__ == '__main__':
